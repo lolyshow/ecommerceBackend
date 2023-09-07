@@ -2,7 +2,7 @@ const {default:mongoose} = require("mongoose")
 
 const dbConnection =() =>{
     try{
-        const con = mongoose.connect('mongodb://localhost:27017/')
+        const con = mongoose.connect(process.env.MONGODB_URL)
         console.log("database connected successfully")
     }  
     catch(error){
