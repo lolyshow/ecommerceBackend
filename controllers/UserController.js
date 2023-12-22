@@ -7,10 +7,10 @@ const User = require("../models/UserModel");
 
 const asyncHandler = require("express-async-handler");
 const { generateToken } = require("../config/jwtToken");
-// const validateMongoDbId = require("../utils/validateMongodbId");
-// const { generateRefreshToken } = require("../config/refreshtoken");
+const validateMongoDbId = require("../utils/validateMongodbId");
+const { generateRefreshToken } = require("../config/refreshtoken");
 // const crypto = require("crypto");
-// const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 // const sendEmail = require("./emailCtrl");
 
 // Create a User ----------------------------------------------
@@ -24,35 +24,48 @@ const createUser = asyncHandler(async (req, res) => {
    * TODO:With the help of email find the user exists or not
    */
 
-      const findUser = await User.findOne({ email: email });
+  const findUser = await User.findOne({ email: email });
   if (!findUser) {
     /**
      * TODO:if user not found user create a new user
      */
-    try{
-        let newUser = await User.create(req.body);
-       
-        const response = {
-            message: "User created successfully",
-            code:200,
-            error: null,
-            isError: false,
-            user: newUser,
-        };
-        res.json(response);
+    try {
+      let newUser = await User.create(req.body);
+
+      const response = {
+        message: "User created successfully",
+        code: 200,
+        error: null,
+        isError: false,
+        user: newUser,
+      };
+      res.json(response);
+    } catch (error) {
+      console.log("error", error);
+      res.json({
+        status: 300,
+        message: "Error!!!",
+        error: error.errors,
+        isError: true,
+      });
     }
-    catch(error){
-        console.log("error",error)
-        res.json({status:300,message:"Error!!!",error:error.errors,isError:true});
-    }
-    
-  } else if(findUser.email) {
+  } else if (findUser.email) {
     /**
      * TODO:if user found then thow an error: User already exists
      */
-    res.json({status:204,message:"User already exists",error:null,isError:true})
-  }else{
-    res.json({status:500,message:"Server Error",error:null,isError:true})
+    res.json({
+      status: 204,
+      message: "User already exists",
+      error: null,
+      isError: true,
+    });
+  } else {
+    res.json({
+      status: 500,
+      message: "Server Error",
+      error: null,
+      isError: true,
+    });
   }
 });
 
@@ -63,18 +76,18 @@ const UserLogin = asyncHandler(async (req, res) => {
   const findUser = await User.findOne({ email });
   if (findUser && (await findUser.isPasswordMatched(password))) {
     // res.json({error:false, meassage:'Login Successful'})
-    // const refreshToken = await generateRefreshToken(findUser?._id);
-    // const updateuser = await User.findByIdAndUpdate(
-    //   findUser.id,
-    //   {
-    //     refreshToken: refreshToken,
-    //   },
-    //   { new: true }
-    // );
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   maxAge: 72 * 60 * 60 * 1000,
-    // });
+    const refreshToken = await generateRefreshToken(findUser?._id);
+    const updateuser = await User.findByIdAndUpdate(
+      findUser.id,
+      {
+        refreshToken: refreshToken,
+      },
+      { new: true }
+    );
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 72 * 60 * 60 * 1000,
+    });
     res.json({
       _id: findUser?._id,
       firstname: findUser?.firstname,
@@ -87,7 +100,6 @@ const UserLogin = asyncHandler(async (req, res) => {
     throw new Error("Invalid Credentials");
   }
 });
-
 
 // admin login
 const loginAdmin = asyncHandler(async (req, res) => {
@@ -152,9 +164,18 @@ const logout = asyncHandler(async (req, res) => {
     });
     return res.sendStatus(204); // forbidden
   }
-  await User.findOneAndUpdate(refreshToken, {
-    refreshToken: "",
-  });
+  const filter = { refreshToken: "yourRefreshTokenValueHere" };
+  const update = { $set: { refreshToken: "" } };
+
+  try {
+    const updatedUser = await User.findOneAndUpdate(filter, update, {
+      new: true,
+    });
+    // 'updatedUser' now contains the document after the update
+  } catch (error) {
+    // Handle errors, e.g., the document with the specified filter doesn't exist
+    console.error(error);
+  }
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: true,
@@ -166,7 +187,7 @@ const logout = asyncHandler(async (req, res) => {
 
 const updatedUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  validateMongoDbId(_id);
+  // validateMongoDbId(_id);
 
   try {
     const updatedUser = await User.findByIdAndUpdate(
@@ -223,7 +244,7 @@ const getallUser = asyncHandler(async (req, res) => {
 // Get a single user
 const getSingleUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  // validateMongoDbId(id);
+  validateMongoDbId(id);
 
   try {
     const getaUser = await User.findById(id);
@@ -239,7 +260,7 @@ const getSingleUser = asyncHandler(async (req, res) => {
 
 const deleteSingleUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  // validateMongoDbId(id);
+  validateMongoDbId(id);
 
   try {
     const deleteaUser = await User.findByIdAndDelete(id);
@@ -273,7 +294,7 @@ const blockUser = asyncHandler(async (req, res) => {
 
 const unblockUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  validateMongoDbId(id);
+  // validateMongoDbId(id);
 
   try {
     const unblock = await User.findByIdAndUpdate(
@@ -547,24 +568,24 @@ module.exports = {
   getallUser,
   getSingleUser,
   deleteSingleUser,
-//   updatedUser,
-//   blockUser,
-//   unblockUser,
-//   handleRefreshToken,
-//   logout,
-//   updatePassword,
-//   forgotPasswordToken,
-//   resetPassword,
-//   loginAdmin,
-//   getWishlist,
-//   saveAddress,
-//   userCart,
-//   getUserCart,
-//   emptyCart,
-//   applyCoupon,
-//   createOrder,
-//   getOrders,
-//   updateOrderStatus,
-//   getAllOrders,
-//   getOrderByUserId,
+  updatedUser,
+  blockUser,
+  unblockUser,
+  handleRefreshToken,
+  logout,
+  //   updatePassword,
+  //   forgotPasswordToken,
+  //   resetPassword,
+  //   loginAdmin,
+  //   getWishlist,
+  //   saveAddress,
+  //   userCart,
+  //   getUserCart,
+  //   emptyCart,
+  //   applyCoupon,
+  //   createOrder,
+  //   getOrders,
+  //   updateOrderStatus,
+  //   getAllOrders,
+  //   getOrderByUserId,
 };
