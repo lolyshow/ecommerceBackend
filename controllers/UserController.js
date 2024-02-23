@@ -1,4 +1,6 @@
 const User = require("../models/UserModel");
+const crypto = require("crypto");
+
 // const Product = require("../models/productModel");
 // const Cart = require("../models/cartModel");
 // const Coupon = require("../models/couponModel");
@@ -342,7 +344,7 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
       subject: "Forgot Password Link",
       htm: resetURL,
     };
-    sendEmail(data);
+    // sendEmail(data);
     res.json(token);
   } catch (error) {
     throw new Error(error);
@@ -573,9 +575,9 @@ module.exports = {
   unblockUser,
   handleRefreshToken,
   logout,
-  //   updatePassword,
-  //   forgotPasswordToken,
-  //   resetPassword,
+    updatePassword,
+    forgotPasswordToken,
+    resetPassword,
   //   loginAdmin,
   //   getWishlist,
   //   saveAddress,

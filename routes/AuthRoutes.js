@@ -10,9 +10,9 @@ const {
   unblockUser,
   handleRefreshToken,
   logout,
-//   updatePassword,
-//   forgotPasswordToken,
-//   resetPassword,
+  updatePassword,
+  forgotPasswordToken,
+  resetPassword,
 //   loginAdmin,
 //   getWishlist,
 //   saveAddress,
@@ -41,11 +41,11 @@ router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockUser);
 
 // router.delete("/empty-cart", authMiddleware, emptyCart);
 
-// router.post("/forgot-password-token", forgotPasswordToken);
+router.post("/forgot-password-token", forgotPasswordToken);
 
-// router.put("/reset-password/:token", resetPassword);
+router.put("/reset-password/:token", resetPassword);
 
-// router.put("/password", authMiddleware, updatePassword);
+router.put("/password", authMiddleware, updatePassword);
 // router.post("/admin-login", loginAdmin);
 // router.post("/cart", authMiddleware, userCart);
 // router.post("/cart/applycoupon", authMiddleware, applyCoupon);
