@@ -13,31 +13,41 @@ const {
   updatePassword,
   forgotPasswordToken,
   resetPassword,
-//   loginAdmin,
-//   getWishlist,
-//   saveAddress,
-//   userCart,
-//   getUserCart,
-//   emptyCart,
-//   applyCoupon,
-//   createOrder,
-//   getOrders,
-//   updateOrderStatus,
-//   getAllOrders,
+  //   loginAdmin,
+  //   getWishlist,
+  //   saveAddress,
+  userCart,
+  getUserCart,
+  //   emptyCart,
+  //   applyCoupon,
+  //   createOrder,
+  //   getOrders,
+  //   updateOrderStatus,
+  //   getAllOrders,
 } = require("../controllers/UserController");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 router.post("/register", createUser);
+
+router.get("/joh", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
+
+router.post("/form", (req, res) => {
+  console.log("__dirname", req.body);
+});
+
 router.post("/login", UserLogin);
+
 router.get("/all-users", getallUser);
 router.get("/refresh", handleRefreshToken);
 router.get("/logout", logout);
 
-router.get("/:id", authMiddleware, isAdmin, getSingleUser);
+// router.get("/:id", authMiddleware, isAdmin, getSingleUser);
 router.delete("/:id", deleteSingleUser);
 router.put("/edit-user", authMiddleware, updatedUser);
-router.put("/block-user/:id", authMiddleware, isAdmin, blockUser);
-router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockUser);
+// router.put("/block-user/:id", authMiddleware, isAdmin, blockUser);
+// router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockUser);
 
 // router.delete("/empty-cart", authMiddleware, emptyCart);
 
@@ -47,14 +57,14 @@ router.put("/reset-password/:token", resetPassword);
 
 router.put("/password", authMiddleware, updatePassword);
 // router.post("/admin-login", loginAdmin);
-// router.post("/cart", authMiddleware, userCart);
+router.post("/cart", authMiddleware, userCart);
 // router.post("/cart/applycoupon", authMiddleware, applyCoupon);
 // router.post("/cart/cash-order", authMiddleware, createOrder);
 // router.get("/get-orders", authMiddleware, getOrders);
 // router.get("/getallorders", authMiddleware, isAdmin, getAllOrders);
 // router.post("/getorderbyuser/:id", authMiddleware, isAdmin, getAllOrders);
 // router.get("/wishlist", authMiddleware, getWishlist);
-// router.get("/cart", authMiddleware, getUserCart);
+router.get("/cart", authMiddleware, getUserCart);
 
 // router.put(
 //   "/order/update-order/:id",

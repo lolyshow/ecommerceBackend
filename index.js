@@ -1,9 +1,9 @@
 const express = require("express");
-
+const cors = require('cors');
 const dbConnection = require("./config/dbConnection");
 const app = express();
 const dotenv = require("dotenv").config();
-const PORT = 6000;
+const PORT = 5001;
 const authRouter = require("./routes/AuthRoutes");
 const ProductRouter = require("./routes/ProductRoutes");
 const blogRouter = require("./routes/blogRoutes");
@@ -14,7 +14,7 @@ const cookieParser = require("cookie-parser");
 dbConnection()
 
 // app.use(morgan("dev"));
-// app.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser())

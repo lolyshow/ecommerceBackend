@@ -1,8 +1,8 @@
 const User = require("../models/UserModel");
 const crypto = require("crypto");
 
-// const Product = require("../models/productModel");
-// const Cart = require("../models/cartModel");
+const Product = require("../models/ProductModel");
+const Cart = require("../models/CartModel");
 // const Coupon = require("../models/couponModel");
 // const Order = require("../models/orderModel");
 // const uniqid = require("uniqid");
@@ -75,31 +75,43 @@ const createUser = asyncHandler(async (req, res) => {
 const UserLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   // check if user exists or not
-  const findUser = await User.findOne({ email });
-  if (findUser && (await findUser.isPasswordMatched(password))) {
-    // res.json({error:false, meassage:'Login Successful'})
-    const refreshToken = await generateRefreshToken(findUser?._id);
-    const updateuser = await User.findByIdAndUpdate(
-      findUser.id,
-      {
-        refreshToken: refreshToken,
-      },
-      { new: true }
-    );
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
+  try {
+    const findUser = await User.findOne({ email });
+    if (findUser && (await findUser.isPasswordMatched(password))) {
+      // res.json({error:false, meassage:'Login Successful'})
+      const refreshToken = await generateRefreshToken(findUser?._id);
+      const updateuser = await User.findByIdAndUpdate(
+        findUser.id,
+        {
+          refreshToken: refreshToken,
+        },
+        { new: true }
+      );
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 72 * 60 * 60 * 1000,
+      });
+      res.json({
+        status: 200,
+        message: "Login Successful",
+        _id: findUser?._id,
+        firstname: findUser?.firstname,
+        lastname: findUser?.lastname,
+        email: findUser?.email,
+        mobile: findUser?.mobile,
+        token: generateToken(findUser?._id),
+      });
+    } else {
+      return res.json({
+        status: 300,
+        message: "Invalid Credential",
+      });
+    }
+  } catch (error) {
+    return res.json({
+      status: 400,
+      message: "Server Error",
     });
-    res.json({
-      _id: findUser?._id,
-      firstname: findUser?.firstname,
-      lastname: findUser?.lastname,
-      email: findUser?.email,
-      mobile: findUser?.mobile,
-      token: generateToken(findUser?._id),
-    });
-  } else {
-    throw new Error("Invalid Credentials");
   }
 });
 
@@ -377,39 +389,190 @@ const getWishlist = asyncHandler(async (req, res) => {
   }
 });
 
+// const userCart = asyncHandler(async (req, res) => {
+//   const { cart } = req.body;
+//   const { _id } = req.user;
+
+//   // Validate the MongoDB ID
+//   validateMongoDbId(_id);
+
+//   // Validate if cart is provided and valid
+//   if (!cart || !Array.isArray(cart) || cart.length === 0) {
+//     return res.status(400).json({ message: "Cart is empty or invalid" });
+//   }
+
+//   try {
+//     const user = await User.findById(_id);
+
+//     // Check if the user exists
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Check if the user already has a cart
+//     let existingCart = await Cart.findOne({ orderby: user._id });
+//     console.log(existingCart, "esists");
+//     // If the cart exists, update it; otherwise, create a new one
+//     if (existingCart) {
+//       // Update the existing cart
+//       console.log("cart", cart);
+//       cart.forEach(async (newItem) => {
+//         const productInCart = existingCart.products.find(
+//           (item) => item.product.toString() === newItem._id.toString()
+//         );
+//         console.log(productInCart, "ProductInCart");
+//         if (productInCart) {
+//           // Update the count if the product is already in the cart
+//           productInCart.count += newItem.count;
+//         } else {
+//           console.log("its false");
+//           // Add the new product to the cart
+//           const product = await Product.findById(newItem._id)
+//             .select("price")
+//             .exec();
+//           if (product) {
+//             // console.log("found!!!")
+//             existingCart.products.push({
+//               product: newItem._id,
+//               count: newItem.count,
+//               color: newItem.color,
+//               price: product.price,
+//             });
+//           }
+//           // console.log("existingCartingx",existingCart)
+//           // Recalculate the cart total
+//           existingCart.cartTotal = existingCart.products.reduce(
+//             (acc, item) => acc + item.price * item.count,
+//             0
+//           );
+
+//           // Save the updated cart
+//           await existingCart.save();
+          
+//         }
+//       });
+//       return res.json(existingCart);
+//     } else {
+//       // Create a new cart if none exists
+//       const products = await Promise.all(
+//         cart.map(async (item) => {
+//           const product = await Product.findById(item._id)
+//             .select("price")
+//             .exec();
+//           return {
+//             product: item._id,
+//             count: item.count,
+//             color: item.color,
+//             price: product.price,
+//           };
+//         })
+//       );
+
+//       const cartTotal = products.reduce(
+//         (acc, item) => acc + item.price * item.count,
+//         0
+//       );
+
+//       const newCart = await new Cart({
+//         products,
+//         cartTotal,
+//         orderby: user._id,
+//       }).save();
+
+//       return res.json(newCart);
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// });
+
+
 const userCart = asyncHandler(async (req, res) => {
   const { cart } = req.body;
   const { _id } = req.user;
+
+  // Validate the MongoDB ID
   validateMongoDbId(_id);
+
+  // Validate if cart is provided and valid
+  if (!cart || !Array.isArray(cart) || cart.length === 0) {
+    return res.status(400).json({ message: "Cart is empty or invalid" });
+  }
+
   try {
-    let products = [];
     const user = await User.findById(_id);
-    // check if user already have product in cart
-    const alreadyExistCart = await Cart.findOne({ orderby: user._id });
-    if (alreadyExistCart) {
-      alreadyExistCart.remove();
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    for (let i = 0; i < cart.length; i++) {
-      let object = {};
-      object.product = cart[i]._id;
-      object.count = cart[i].count;
-      object.color = cart[i].color;
-      let getPrice = await Product.findById(cart[i]._id).select("price").exec();
-      object.price = getPrice.price;
-      products.push(object);
+
+    // Check if the user already has a cart
+    let existingCart = await Cart.findOne({ orderby: user._id });
+
+    if (existingCart) {
+      // Update the existing cart
+      for (const newItem of cart) {
+        const productInCart = existingCart.products.find(
+          (item) => item.product.toString() === newItem._id.toString()
+        );
+
+        if (productInCart) {
+          // Update the count if the product is already in the cart
+          productInCart.count += newItem.count;
+        } else {
+          // Add the new product to the cart
+          const product = await Product.findById(newItem._id).select("price").exec();
+          if (product) {
+            existingCart.products.push({
+              product: newItem._id,
+              count: newItem.count,
+              color: newItem.color,
+              price: product.price,
+            });
+          }
+        }
+      }
+
+      // Recalculate the cart total
+      existingCart.cartTotal = existingCart.products.reduce(
+        (acc, item) => acc + item.price * item.count,
+        0
+      );
+
+      // Save the updated cart
+      await existingCart.save();
+
+      return res.json(existingCart);
+    } else {
+      // Create a new cart if none exists
+      const products = await Promise.all(
+        cart.map(async (item) => {
+          const product = await Product.findById(item._id).select("price").exec();
+          return {
+            product: item._id,
+            count: item.count,
+            color: item.color,
+            price: product.price,
+          };
+        })
+      );
+
+      const cartTotal = products.reduce(
+        (acc, item) => acc + item.price * item.count,
+        0
+      );
+
+      const newCart = await new Cart({
+        products,
+        cartTotal,
+        orderby: user._id,
+      }).save();
+
+      return res.json(newCart);
     }
-    let cartTotal = 0;
-    for (let i = 0; i < products.length; i++) {
-      cartTotal = cartTotal + products[i].price * products[i].count;
-    }
-    let newCart = await new Cart({
-      products,
-      cartTotal,
-      orderby: user?._id,
-    }).save();
-    res.json(newCart);
   } catch (error) {
-    throw new Error(error);
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -575,14 +738,14 @@ module.exports = {
   unblockUser,
   handleRefreshToken,
   logout,
-    updatePassword,
-    forgotPasswordToken,
-    resetPassword,
+  updatePassword,
+  forgotPasswordToken,
+  resetPassword,
   //   loginAdmin,
   //   getWishlist,
   //   saveAddress,
-  //   userCart,
-  //   getUserCart,
+  userCart,
+  getUserCart,
   //   emptyCart,
   //   applyCoupon,
   //   createOrder,
