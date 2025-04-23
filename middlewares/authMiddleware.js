@@ -18,7 +18,8 @@ const authMiddleware = asyncHandler(async (req, res, next) =>{
             }
         }
         catch(error){
-            throw new Error("Not Authorized token expired, Please login again!")
+            res.status(500).json({ status:401, message: "Not Authorized token expired, Please login again!" });
+            // throw new Error("Not Authorized token expired, Please login again!")
         }
     }else{
         throw new Error("Please pass token")

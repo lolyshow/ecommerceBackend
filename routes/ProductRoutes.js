@@ -13,7 +13,15 @@ const { uploadPhoto, productImgResize } = require("../middlewares/uploadImage");
 
 const router = express.Router();
 
-router.post("/", authMiddleware, isAdmin, createProduct);
+// router.post("/", authMiddleware, isAdmin, createProduct);
+router.post(
+  "/",
+  authMiddleware,
+  isAdmin,
+  uploadPhoto.array("images", 5),  // <-- max 5 images, adjust as needed
+  productImgResize,                // <-- if you want to resize before upload
+  createProduct
+);
 
 router.get("/:id", getaProduct);
 router.put("/wishlist", authMiddleware, addToWishlist);

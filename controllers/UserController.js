@@ -120,7 +120,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   // check if user exists or not
   const findAdmin = await User.findOne({ email });
-  if (findAdmin.role !== "admin") throw new Error("Not Authorised");
+  if (findAdmin?.role !== "admin") throw new Error("Not Authorised");
   if (findAdmin && (await findAdmin.isPasswordMatched(password))) {
     const refreshToken = await generateRefreshToken(findAdmin?._id);
     const updateuser = await User.findByIdAndUpdate(
@@ -448,7 +448,7 @@ const getWishlist = asyncHandler(async (req, res) => {
 
 //           // Save the updated cart
 //           await existingCart.save();
-          
+
 //         }
 //       });
 //       return res.json(existingCart);
@@ -486,7 +486,6 @@ const getWishlist = asyncHandler(async (req, res) => {
 //   }
 // });
 
-
 const userCart = asyncHandler(async (req, res) => {
   const { cart } = req.body;
   const { _id } = req.user;
@@ -522,7 +521,9 @@ const userCart = asyncHandler(async (req, res) => {
           productInCart.count += newItem.count;
         } else {
           // Add the new product to the cart
-          const product = await Product.findById(newItem._id).select("price").exec();
+          const product = await Product.findById(newItem._id)
+            .select("price")
+            .exec();
           if (product) {
             existingCart.products.push({
               product: newItem._id,
@@ -548,7 +549,9 @@ const userCart = asyncHandler(async (req, res) => {
       // Create a new cart if none exists
       const products = await Promise.all(
         cart.map(async (item) => {
-          const product = await Product.findById(item._id).select("price").exec();
+          const product = await Product.findById(item._id)
+            .select("price")
+            .exec();
           return {
             product: item._id,
             count: item.count,
@@ -741,7 +744,7 @@ module.exports = {
   updatePassword,
   forgotPasswordToken,
   resetPassword,
-  //   loginAdmin,
+  loginAdmin,
   //   getWishlist,
   //   saveAddress,
   userCart,

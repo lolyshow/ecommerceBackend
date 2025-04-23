@@ -13,7 +13,7 @@ const {
   updatePassword,
   forgotPasswordToken,
   resetPassword,
-  //   loginAdmin,
+    loginAdmin,
   //   getWishlist,
   //   saveAddress,
   userCart,
@@ -56,7 +56,7 @@ router.post("/forgot-password-token", forgotPasswordToken);
 router.put("/reset-password/:token", resetPassword);
 
 router.put("/password", authMiddleware, updatePassword);
-// router.post("/admin-login", loginAdmin);
+router.post("/admin-login", loginAdmin);
 router.post("/cart", authMiddleware, userCart);
 // router.post("/cart/applycoupon", authMiddleware, applyCoupon);
 // router.post("/cart/cash-order", authMiddleware, createOrder);
