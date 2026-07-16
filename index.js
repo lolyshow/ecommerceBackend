@@ -8,6 +8,7 @@ const authRouter = require("./routes/AuthRoutes");
 const ProductRouter = require("./routes/ProductRoutes");
 const blogRouter = require("./routes/blogRoutes");
 const CategoryRoute = require("./routes/CategoryRoute");
+const uploadRoute = require("./routes/uploadRoute");
 
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
@@ -19,9 +20,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser())
 app.use("/api/user", authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/product", ProductRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/Category", CategoryRoute);
+app.use("/api/upload", uploadRoute);
 
 
 app.listen(PORT, () => {

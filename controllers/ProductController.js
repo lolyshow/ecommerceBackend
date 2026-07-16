@@ -2,28 +2,10 @@ const Product = require("../models/ProductModel");
 const User = require("../models/UserModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoDbId = require("../utils/validateMongodbId");
-const cloudinaryUploadImage = require("../utils/cloudinary");
-const fs = require("fs");
 
 const createProduct = asyncHandler(async (req, res) => {
   const { title } = req.body;
   try {
-    // Upload all images and get their URLs
-    const files = req.files;
-    const imageUploadResults = await Promise.all(
-      files.map(async (file) => {
-        const result = await cloudinaryUploadImage(file.path);
-        fs.unlinkSync(file.path); // delete temp file after upload
-        return {
-          url: result.url,
-          public_id: result.public_id,
-        };
-      })
-    );
-
-    // Attach uploaded image URLs to the product
-    req.body.images = imageUploadResults;
-
     // Create product
     const newProduct = await Product.create(req.body);
     res.json(newProduct);

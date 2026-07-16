@@ -389,6 +389,11 @@ const getWishlist = asyncHandler(async (req, res) => {
   }
 });
 
+const getMe = async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
+  res.json(user);
+};
+
 // const userCart = asyncHandler(async (req, res) => {
 //   const { cart } = req.body;
 //   const { _id } = req.user;
@@ -745,6 +750,7 @@ module.exports = {
   forgotPasswordToken,
   resetPassword,
   loginAdmin,
+  getMe,
   //   getWishlist,
   //   saveAddress,
   userCart,

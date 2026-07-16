@@ -18,6 +18,7 @@ const {
   //   saveAddress,
   userCart,
   getUserCart,
+  getMe,
   //   emptyCart,
   //   applyCoupon,
   //   createOrder,
@@ -40,6 +41,8 @@ router.post("/form", (req, res) => {
 router.post("/login", UserLogin);
 
 router.get("/all-users", getallUser);
+router.get("/me", authMiddleware, getMe);
+
 router.get("/refresh", handleRefreshToken);
 router.get("/logout", logout);
 
