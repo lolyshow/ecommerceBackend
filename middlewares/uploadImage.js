@@ -2,13 +2,16 @@ const multer = require("multer");
 const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
+
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../public/images/"));
+    cb(null, path.join(__dirname, "../public/images"));
   },
   filename: function (req, file, cb) {
-    const uniquesuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniquesuffix + ".jpeg");
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+    cb(null, `${file.fieldname}-${uniqueSuffix}.jpg`);
   },
 });
 
@@ -16,14 +19,16 @@ const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image")) {
     cb(null, true);
   } else {
-    cb({ message: "Unsupported file format" }, false);
+    cb(new Error("Only image files are allowed"), false);
   }
 };
 
 const uploadPhoto = multer({
-  storage: storage,
+  storage,
   fileFilter: multerFilter,
-  limits: { fileSize: 1000000 },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 5MB
+  },
 });
 
 const productImgResize = async (req, res, next) => {
