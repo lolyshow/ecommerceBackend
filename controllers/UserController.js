@@ -609,6 +609,34 @@ const emptyCart = asyncHandler(async (req, res) => {
   }
 });
 
+const removeProductFromCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { productId } = req.params;
+
+  validateMongoDbId(_id);
+  validateMongoDbId(productId);
+
+  try {
+    const cart = await Cart.findOne({ orderby: _id });
+
+    if (!cart) {
+      return res.status(404).json({
+        message: "Cart not found",
+      });
+    }
+
+    cart.products = cart.products.filter(
+      (item) => item.product.toString() !== productId
+    );
+
+    await cart.save();
+
+    res.json(cart);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 const applyCoupon = asyncHandler(async (req, res) => {
   const { coupon } = req.body;
   const { _id } = req.user;
@@ -755,6 +783,7 @@ module.exports = {
   //   saveAddress,
   userCart,
   getUserCart,
+  removeProductFromCart,
   //   emptyCart,
   //   applyCoupon,
   //   createOrder,

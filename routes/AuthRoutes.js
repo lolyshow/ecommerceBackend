@@ -19,7 +19,8 @@ const {
   userCart,
   getUserCart,
   getMe,
-  //   emptyCart,
+    emptyCart,
+    removeProductFromCart
   //   applyCoupon,
   //   createOrder,
   //   getOrders,
@@ -61,6 +62,8 @@ router.put("/reset-password/:token", resetPassword);
 router.put("/password", authMiddleware, updatePassword);
 router.post("/admin-login", loginAdmin);
 router.post("/cart", authMiddleware, userCart);
+router.delete("/cart/:productId", authMiddleware, removeProductFromCart);
+
 // router.post("/cart/applycoupon", authMiddleware, applyCoupon);
 // router.post("/cart/cash-order", authMiddleware, createOrder);
 // router.get("/get-orders", authMiddleware, getOrders);
