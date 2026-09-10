@@ -1,4 +1,5 @@
 const express = require("express");
+
 const {
   createProduct,
   getaProduct,
@@ -8,35 +9,45 @@ const {
   addToWishlist,
   rating,
 } = require("../controllers/ProductController");
-const { isAdmin, authMiddleware } = require("../middlewares/authMiddleware");
-const { uploadPhoto, productImgResize } = require("../middlewares/uploadImage");
+
+const {
+  isAdmin,
+  authMiddleware,
+} = require("../middlewares/authMiddleware");
+
+const {
+  uploadPhoto,
+  productImgResize,
+} = require("../middlewares/uploadImage");
 
 const router = express.Router();
 
-// router.post("/", authMiddleware, isAdmin, createProduct);
-router.post(
-  "/",
-  authMiddleware,
-  isAdmin,
-  uploadPhoto.array("images", 5),  // <-- max 5 images, adjust as needed
-  productImgResize,                // <-- if you want to resize before upload
-  createProduct
-);
-
-router.get("/:id", getaProduct);
-router.put("/wishlist", authMiddleware, addToWishlist);
-router.put("/rating", authMiddleware, rating);
+// Create product
 router.post(
   "/",
   authMiddleware,
   isAdmin,
   uploadPhoto.array("images", 10),
   productImgResize,
-  // uploadImages
+  createProduct
 );
-router.put("/:id", authMiddleware, isAdmin, updateProduct);
-router.delete("/:id", authMiddleware, isAdmin, deleteProduct);
 
+// Wishlist
+router.put("/wishlist", authMiddleware, addToWishlist);
+
+// Rating
+router.put("/rating", authMiddleware, rating);
+
+// Get all products / filtered products
 router.get("/", getAllProduct);
+
+// Get single product
+router.get("/:id", getaProduct);
+
+// Update product
+router.put("/:id", authMiddleware, isAdmin, updateProduct);
+
+// Delete product
+router.delete("/:id", authMiddleware, isAdmin, deleteProduct);
 
 module.exports = router;

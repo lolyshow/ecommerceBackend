@@ -15,7 +15,6 @@ const createProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
 const updateProduct = asyncHandler(async (req, res) => {
   const routeParam = req.params;
   validateMongoDbId(routeParam);
@@ -25,9 +24,8 @@ const updateProduct = asyncHandler(async (req, res) => {
       req.body,
       {
         new: true,
-      }
+      },
     );
-
 
     if (!updateProduct) {
       console.log("No matching document found.");
@@ -65,50 +63,101 @@ const getaProduct = asyncHandler(async (req, res) => {
 
 const getAllProduct = asyncHandler(async (req, res) => {
   try {
-    // product filter
-    const queryObj = { ...req.query };
-    const excludeFields = ["page", "sort", "limit", "fields"];
-    excludeFields.forEach((el) => delete queryObj[el]);
-    let queryStr = JSON.stringify(queryObj);
-    // where gte=greate or equals gt = greater than and lt is less than
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    const {
+      page = 1,
+      limit = 12,
+      sort = "-createdAt",
+      category,
+      search,
+      minPrice,
+      maxPrice,
+    } = req.query;
 
-    let query = Product.find(JSON.parse(queryStr));
+    const queryObj = {};
 
-    // Product Sorting
-
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(",").join(" ");
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort("-createdAt");
+    if (category) {
+      queryObj.category = {
+        $regex: `^${category}$`,
+        $options: "i",
+      };
     }
 
-    // limiting the fields
-
-    if (req.query.fields) {
-      const fields = req.query.fields.split(",").join(" ");
-      query = query.select(fields);
-    } else {
-      query = query.select("-__v");
+    if (search) {
+      queryObj.title = {
+        $regex: search,
+        $options: "i",
+      };
     }
 
-    // pagination
+    if (minPrice || maxPrice) {
+      queryObj.price = {};
 
-    const page = req.query.page;
-    const limit = req.query.limit;
-    const skip = (page - 1) * limit;
-    query = query.skip(skip).limit(limit);
-    if (req.query.page) {
-      const productCount = await Product.countDocuments();
-      if (skip >= productCount) throw new Error("This Page does not exists");
+      if (minPrice) {
+        queryObj.price.$gte = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        queryObj.price.$lte = Number(maxPrice);
+      }
     }
-    const product = await query;
-    res.json(product);
+
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const products = await Product.find(queryObj)
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNumber)
+      .select("-__v");
+
+    const totalProducts = await Product.countDocuments(queryObj);
+
+    const totalPages = Math.ceil(totalProducts / limitNumber);
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages,
+        totalProducts,
+        limit: limitNumber,
+        hasNextPage: pageNumber < totalPages,
+        hasPreviousPage: pageNumber > 1,
+      },
+    });
   } catch (error) {
-    throw new Error(error);
+    throw new Error(error.message);
   }
 });
+
+
+const getProductsByCategory = asyncHandler(async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const products = await Product.find({
+      category: {
+        $regex: `^${category}$`,
+        $options: "i",
+      },
+    })
+      .sort("-createdAt")
+      .select("-__v");
+
+    res.status(200).json({
+      success: true,
+      category,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    throw new Error(error.message);
+  }
+});
+
 const addToWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { prodId } = req.body;
@@ -123,7 +172,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
         },
         {
           new: true,
-        }
+        },
       );
       res.json(user);
     } else {
@@ -134,7 +183,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
         },
         {
           new: true,
-        }
+        },
       );
       res.json(user);
     }
@@ -149,7 +198,7 @@ const rating = asyncHandler(async (req, res) => {
   try {
     const product = await Product.findById(prodId);
     let alreadyRated = product.ratings.find(
-      (userId) => userId.postedby.toString() === _id.toString()
+      (userId) => userId.postedby.toString() === _id.toString(),
     );
     if (alreadyRated) {
       const updateRating = await Product.updateOne(
@@ -161,7 +210,7 @@ const rating = asyncHandler(async (req, res) => {
         },
         {
           new: true,
-        }
+        },
       );
     } else {
       const rateProduct = await Product.findByIdAndUpdate(
@@ -177,7 +226,7 @@ const rating = asyncHandler(async (req, res) => {
         },
         {
           new: true,
-        }
+        },
       );
     }
     const getallratings = await Product.findById(prodId);
@@ -191,7 +240,7 @@ const rating = asyncHandler(async (req, res) => {
       {
         totalrating: actualRating,
       },
-      { new: true }
+      { new: true },
     );
     res.json(finalproduct);
   } catch (error) {
@@ -207,4 +256,5 @@ module.exports = {
   deleteProduct,
   addToWishlist,
   rating,
+  getProductsByCategory
 };
